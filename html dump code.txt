@@ -1,0 +1,67 @@
+!pip install -q requests beautifulsoup4
+
+import os, time, requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin, urldefrag
+
+BASE_URL = "https://books.toscrape.com/"
+OUT_DIR = "/content/html_dump"
+os.makedirs(OUT_DIR, exist_ok=True)
+
+# ---------- Custom Headers (from your earlier code) ----------
+HEADERS = {
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    'accept-language': 'en-US,en;q=0.9',
+    'cache-control': 'max-age=0',
+    'if-modified-since': 'Wed, 08 Feb 2023 21:02:32 GMT',
+    'if-none-match': 'W/"63e40de8-c85e"',
+    'priority': 'u=0, i',
+    'sec-ch-ua': '"Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'sec-fetch-dest': 'document',
+    'sec-fetch-mode': 'navigate',
+    'sec-fetch-site': 'none',
+    'sec-fetch-user': '?1',
+    'upgrade-insecure-requests': '1',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+}
+
+# ---------- Crawling ----------
+visited = set()
+to_visit = [BASE_URL]
+
+while to_visit:
+    url = to_visit.pop(0)
+    if url in visited:
+        continue
+    visited.add(url)
+
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=10)
+        if r.status_code != 200 or "text/html" not in r.headers.get("Content-Type", ""):
+            continue
+    except Exception:
+        continue
+
+    rel_path = url.replace(BASE_URL, "")
+    if not rel_path or rel_path.endswith("/"):
+        rel_path += "index.html"
+    if not rel_path.endswith(".html"):
+        rel_path += ".html"
+
+    save_path = os.path.join(OUT_DIR, rel_path)
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    with open(save_path, "w", encoding="utf-8") as f:
+        f.write(r.text)
+
+    soup = BeautifulSoup(r.text, "html.parser")
+    for a in soup.find_all("a", href=True):
+        link = urljoin(url, a["href"])
+        link, _ = urldefrag(link)
+        if link.startswith(BASE_URL) and link not in visited:
+            to_visit.append(link)
+
+    time.sleep(0.5)
+
+print(f"✅ HTML dump completed. Files saved in: {OUT_DIR}")

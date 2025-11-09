@@ -1,0 +1,13 @@
+setup.py
+book_spider/__init__.py
+book_spider/items.py
+book_spider/middlewares.py
+book_spider/pipelines.py
+book_spider/settings.py
+book_spider/spiders/__init__.py
+book_spider/spiders/book.py
+project.egg-info/PKG-INFO
+project.egg-info/SOURCES.txt
+project.egg-info/dependency_links.txt
+project.egg-info/entry_points.txt
+project.egg-info/top_level.txt

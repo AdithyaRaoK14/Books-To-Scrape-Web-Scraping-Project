@@ -1,0 +1,2 @@
+[scrapy]
+settings = book_spider.settings
